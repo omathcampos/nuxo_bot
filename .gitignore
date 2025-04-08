@@ -1,0 +1,47 @@
+# Arquivos de ambiente e configuração
+.env
+*.env
+
+# Arquivos de banco de dados
+*.json
+*.db
+*.sqlite
+*.sqlite3
+
+# Arquivos de cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Arquivos de log
+*.log
+
+# Diretórios de ambiente virtual
+venv/
+ENV/
+env/
+
+# IDEs e editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store 
