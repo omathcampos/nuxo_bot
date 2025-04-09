@@ -1,6 +1,8 @@
 import os
 import re
 import logging
+import threading
+from flask import Flask
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -23,6 +25,14 @@ logger = logging.getLogger(__name__)
 
 # Carregar variáveis de ambiente
 load_dotenv()
+
+# Aplicação Flask para manter o serviço ativo no Render
+app = Flask(__name__)
+
+@app.route('/ping')
+def ping():
+    logger.info("Recebido ping para manter aplicação ativa")
+    return 'pong'
 
 # Estados para a conversa de adicionar despesa
 VALOR, LOCAL, CATEGORIA, FORMA_PAGAMENTO, PARCELAS = range(5)
@@ -47,12 +57,7 @@ PARCELAS_OPCOES = ["1", "2", "3", "4", "5", "6", "8", "10", "12"]
 # Instância do banco de dados
 db = Database()
 
-# Migrar dados antigos se necessário
-try:
-    db.migrar_dados()
-    logger.info("Verificação de migração de dados concluída")
-except Exception as e:
-    logger.error(f"Erro ao migrar dados: {e}")
+# Nota: Método migrar_dados não é mais necessário com PostgreSQL
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando para iniciar o bot"""
@@ -570,8 +575,14 @@ def main():
     application.add_handler(relatorio_handler)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, processar_mensagem))
     
-    # Iniciar o bot
-    application.run_polling()
+    # Iniciar o bot em uma thread separada
+    bot_thread = threading.Thread(target=application.run_polling)
+    bot_thread.daemon = True  # Thread finaliza quando o programa principal termina
+    bot_thread.start()
+    
+    # Iniciar servidor Flask para receber pings e manter o serviço ativo
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
 
 if __name__ == "__main__":
     main() 
