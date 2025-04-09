@@ -1,11 +1,78 @@
 import json
 import os
 from datetime import datetime
+import psycopg2
+import psycopg2.extras
+import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Database:
-    def __init__(self, filename="despesas.json"):
-        self.filename = filename
-        self.data = self._load_data()
+    def __init__(self):
+        try:
+            # Conectar ao PostgreSQL
+            self.conn = psycopg2.connect(
+                host="aws-0-sa-east-1.pooler.supabase.com",
+                database="postgres",
+                user="postgres.zxgeldbzeceugqvgwkcf",
+                password="Santista65@",
+                port="6543"
+            )
+            # Configurar para autocommit e usar cursor que retorna dicionários
+            self.conn.autocommit = True
+            print("Conexão estabelecida com sucesso!")
+            
+            # Criar as tabelas se não existirem
+            self._create_tables()
+        except Exception as e:
+            print(f"Erro ao conectar ao banco de dados: {str(e)}")
+            raise e
+    
+    def _create_tables(self):
+        """Cria as tabelas necessárias se não existirem"""
+        with self.conn.cursor() as cursor:
+            # Tabela de usuários
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS usuarios (
+                    id SERIAL PRIMARY KEY,
+                    telegram_id BIGINT UNIQUE NOT NULL,
+                    nome TEXT,
+                    username TEXT,
+                    data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    plano TEXT DEFAULT 'free',
+                    data_expiracao TIMESTAMP
+                )
+            """)
+            
+            # Tabela de despesas
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS despesas (
+                    id SERIAL PRIMARY KEY,
+                    usuario_id BIGINT REFERENCES usuarios(telegram_id),
+                    valor DECIMAL(10,2) NOT NULL,
+                    local TEXT NOT NULL,
+                    categoria TEXT NOT NULL,
+                    forma_pagamento TEXT NOT NULL,
+                    data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    parcelas INTEGER DEFAULT 1,
+                    valor_parcela DECIMAL(10,2),
+                    parcelado BOOLEAN DEFAULT FALSE,
+                    CONSTRAINT check_valor_positivo CHECK (valor > 0)
+                )
+            """)
+            
+            # Tabela de categorias personalizadas
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS categorias_personalizadas (
+                    id SERIAL PRIMARY KEY,
+                    usuario_id BIGINT REFERENCES usuarios(telegram_id),
+                    nome TEXT NOT NULL,
+                    UNIQUE (usuario_id, nome)
+                )
+            """)
+            
+            print("Tabelas criadas/verificadas com sucesso!")
     
     def _load_data(self):
         if os.path.exists(self.filename):
@@ -159,9 +226,6 @@ class Database:
         Returns:
             caminho: Caminho para o arquivo Excel gerado
         """
-        import pandas as pd
-        from datetime import datetime, timedelta
-        
         # Filtrar despesas do usuário
         despesas_usuario = [d for d in self.data["despesas"] if d["user_id"] == user_id]
         
