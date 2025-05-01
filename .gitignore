@@ -1,7 +1,5 @@
 # Arquivos de ambiente
 .env
-config.py
-
 # Arquivos de exportação
 exports/
 *.xlsx
