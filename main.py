@@ -9,8 +9,8 @@ from telegram.ext import (
     ConversationHandler,
     Filters
 )
-from flask import Flask
 import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Configuração de logging
 logging.basicConfig(
@@ -43,16 +43,19 @@ from app.handlers.exportacao import (
 )
 from app.db.database import db
 
-# Criar aplicação Flask
-app = Flask(__name__)
+# Servidor HTTP simples
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(b'Nuxo Bot esta funcionando!')
 
-@app.route('/')
-def home():
-    return "Nuxo Bot está funcionando!"
-
-def run_flask():
+def run_server():
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
+    logger.info(f'Servidor HTTP iniciado na porta {port}')
+    server.serve_forever()
 
 def main():
     """Inicia o bot"""
@@ -167,7 +170,7 @@ def main():
     updater.start_polling()
     
     # Iniciar o servidor web
-    t = threading.Thread(target=run_flask)
+    t = threading.Thread(target=run_server)
     t.start()
     
     # Manter o bot em execução
