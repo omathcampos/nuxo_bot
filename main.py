@@ -9,6 +9,8 @@ from telegram.ext import (
     ConversationHandler,
     Filters
 )
+from flask import Flask
+import threading
 
 # Configuração de logging
 logging.basicConfig(
@@ -40,6 +42,17 @@ from app.handlers.exportacao import (
     ESCOLHER_CATEGORIA as EXP_ESCOLHER_CATEGORIA
 )
 from app.db.database import db
+
+# Criar aplicação Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Nuxo Bot está funcionando!"
+
+def run_flask():
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
 
 def main():
     """Inicia o bot"""
@@ -150,8 +163,14 @@ def main():
     # Handler para nova consulta de visualização
     dispatcher.add_handler(CallbackQueryHandler(visualizar_novo_callback, pattern="^visualizar_novo$"))
     
-    # Iniciar o bot
+    # Iniciar o bot em um thread separado
     updater.start_polling()
+    
+    # Iniciar o servidor web
+    t = threading.Thread(target=run_flask)
+    t.start()
+    
+    # Manter o bot em execução
     updater.idle()
     
     logger.info("Bot iniciado!")
