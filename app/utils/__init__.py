@@ -1,0 +1,1 @@
+"""Módulo de utilitários para o Nuxo Bot""" 

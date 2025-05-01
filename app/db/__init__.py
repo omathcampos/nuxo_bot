@@ -1,0 +1,1 @@
+"""Módulo de acesso a dados para o Nuxo Bot""" 
