@@ -1,7 +1,6 @@
 # Arquivos de ambiente
 .env
 # Arquivos de exportação
-exports/
 *.xlsx
 
 # Bytecode Python

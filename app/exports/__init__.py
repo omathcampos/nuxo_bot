@@ -1,0 +1,1 @@
+"""Módulo de exportação de dados para o Nuxo Bot""" 
